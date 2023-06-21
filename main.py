@@ -4,7 +4,10 @@ import subprocess
 import os
 import io
 import tempfile
+import plotly.express as px
+import plotly.io as pio
 from award import main
+
 
 app = Flask(__name__)
 
@@ -14,25 +17,26 @@ def add_header(response):
         response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
     return response
 
-
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
         quarter = int(request.form["quarter"])  # Get the selected quarter from the form
         year = request.form.get('year')
+        action = request.form.get('action')
+        print(action)
         
         try:
             df_data = process_quarter(quarter, year)
-            fname = f"quarterly_{quarter}_report.csv"
-            # return download_csv(df_data, fname)
-            fname = download_csv(df_data, fname)
-            return jsonify({'success': True, 'filename': fname})
+            if action == 'download':
+                fname = f"quarterly_{quarter}_report.csv"
+                fname = download_csv(df_data, fname)
+                return jsonify({'success': True, 'filename': fname, 'action': 'download'})
+            elif action == 'plot':
+                return bonus_chart(quarter,year)
 
         except AttributeError:
-            # return "No data present for this quarter or year yet"
             return jsonify({'error': "No data present for this quarter or year yet"})
         except Exception as e:
-            # return f"An error occurred: {e}"
             return jsonify({'error': f"An error occurred: {e}"})
     else:
         return render_template("index.html")
@@ -52,6 +56,40 @@ def delete_file(filename):
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)})
+
+
+
+@app.route("/bonus_plot/<quarter>/<year>", methods=["GET"])
+def bonus_plot(quarter, year):
+    df = process_quarter(quarter, year)
+
+    
+    # Sort the dataframe by 'Total Bonus'
+    df = df.sort_values('Total Bonus')
+    
+    fig = px.bar(df, 
+                 x='Driver ID', 
+                 y='Total Bonus', 
+                 color='Total Bonus',   # change the color to be based on 'Total Bonus'
+                 title='Total Bonus per Driver',
+                 hover_data=['Total Bonus'],   # this will add a hover text for 'Total Bonus'
+                 labels={'Total Bonus':'Total Bonus', 'Driver ID':'Driver ID'})
+
+    # Convert the figures to HTML and remove the surrounding <html> tags
+    plot_html = pio.to_html(fig, full_html=False)
+    
+    return render_template('plot.html', plot=plot_html)
+
+@app.route("/bonus_chart/<quarter>/<year>", methods=["GET"])
+def bonus_chart(quarter, year):
+    df = process_quarter(quarter, year)
+
+    # Sort the dataframe by 'Total Bonus'
+    df = df.sort_values('Total Bonus')
+    # print(df.to_json(orient='records'))
+    # Send DataFrame as JSON to the client
+    return render_template('chart.html', data=df.to_json(orient='records'))
+
 
 
 

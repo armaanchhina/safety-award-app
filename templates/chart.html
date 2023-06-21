@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bonus Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <canvas id="bonusChart"></canvas>
+    <canvas id="selectedDriverChart"></canvas>
+    <script>
+      var ctx = document.getElementById("bonusChart").getContext("2d");
+      var data = {{ data | safe }};
+      var labels = data.map(function (e) {
+        return e["Driver ID"];
+      });
+      var dataset = data.map(function (e) {
+        return e["Total Bonus"];
+      });
+
+      var chart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: "Total Bonus Per Driver",
+              data: dataset,
+              backgroundColor: "rgba(0,123,255,0.5)",
+              borderColor: "rgba(0,123,255,1)",
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+            },
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  var driverIndex = context.dataIndex;
+                  var driver = data[driverIndex];
+                  return driver["Driver Name"] + ": " + driver["Total Bonus"];
+                },
+              },
+            },
+          },
+          onClick: function (event, elements) {
+            if (elements.length > 0) {
+              var driverIndex = elements[0].index;
+              var driver = data[driverIndex];
+              plotDriverData(driver);
+            }
+          },
+        },
+      });
+
+      var selectedDriverChart = null;
+
+      function plotDriverData(driver) {
+        var selectedDriverCtx = document.getElementById("selectedDriverChart").getContext("2d");
+        var selectedDriverData = [driver["Idle Deduct"], driver["MPG Deduct"], driver["Harsh Deduct"], driver["Safety Deduct"]];
+        var selectedDriverLabels = ["Idle Deduct", "MPG Deduct", "Harsh Deduct", "Safety Deduct"];
+
+        if (selectedDriverChart) {
+          selectedDriverChart.destroy(); // Destroy the previously created chart
+        }
+
+        selectedDriverChart = new Chart(selectedDriverCtx, {
+          type: "bar",
+          data: {
+            labels: selectedDriverLabels,
+            datasets: [
+              {
+                label: "Driver Data" + ": " + driver["Driver Name"],
+                data: selectedDriverData,
+                backgroundColor: "rgba(0,123,255,0.5)",
+                borderColor: "rgba(0,123,255,1)",
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+              },
+            },
+          },
+        });
+      }
+    </script>
+  </body>
+</html>

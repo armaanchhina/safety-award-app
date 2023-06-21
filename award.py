@@ -96,10 +96,8 @@ def parse_df(df: pd.DataFrame, quarter: int):
         idle_perct, idle_deduct = calculate_idle_deduction(row["engineRunTimeDurationMs"], row["engineIdleTimeDurationMs"])
         id = row["driver"]["id"]
         name = row["driver"]["name"]
-        now = (time.time())
 
         safety_score_driver, harsh_event = get_safety_score_and_event_count(id, start, end)
-        print("get_safety_score_and_event_count %d", time.time() - now)
 
         harsh_cost = calculate_harsh_deduction(harsh_event)
 

@@ -1,31 +1,58 @@
 $(document).ready(function () {
   $("#quarterlyForm").on('submit', function (e) {
     e.preventDefault(); // Prevent the form from being submitted traditionally
-    
-    var year = $("#year").val();
+
+    const year = $("#year").val();
+    const quarter = $("#quarter").val();
+    const action = $("#action").val();
+
     if (isNaN(year) || year.length !== 4) {
-        alert("Invalid year format. Please enter a valid 4-digit year.");
-        return;
+      alert("Invalid year format. Please enter a valid 4-digit year.");
+      return;
     }
 
+    if (action === "plot") {
+      // Redirect to the plot URL
+      window.location.href = `/bonus_chart/${quarter}/${year}`;
+      return;
+    }
+
+    // If the action is not "plot", proceed with the download action
+    performAjaxRequest(year, quarter);
+  });
+
+  function performAjaxRequest(year, quarter) {
     $.ajax({
       url: '/',
       method: 'POST',
-      data: $(this).serialize(),
+      data: $("#quarterlyForm").serialize(),
+      beforeSend: function () {
+        $("#loading").show();
+      },
+      complete: function () {
+        $("#loading").hide();
+      },
       success: function (data) {
-          if (data.error) {
-              alert(data.error); // Show the error message if an error exists
-          } else if (data.success) {
-              var link = '/download/' + data.filename;
-              var downloadButton = $('<button/>', {
-                  text: 'Download File',
-                  click: function() { window.location = link; }
-              });
-              $('body').append(downloadButton);
-          } else {
-              alert("An unknown error occurred.");
-          }
+        console.log(data); // Log data to console
+
+        if (data.error) {
+          alert(data.error); // Show the error message if an error exists
+        } else if (data.success) {
+          const link = '/download/' + data.filename;
+
+          // Update the href attribute and text of the download link
+          $('#downloadLink').attr('href', link).text(`Download ${data.filename}`);
+
+          // Show the download modal
+          $('#downloadModal').modal('show');
+        } else {
+          alert("An unknown error occurred.");
+        }
+      },
+      error: function (xhr, status, error) {
+        // Alert any Ajax error
+        alert("Ajax request failed: " + error);
       }
     });
-  });
+  }
 });

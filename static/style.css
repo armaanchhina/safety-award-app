@@ -35,6 +35,10 @@ label {
   width: 100%;
   position: relative;
 }
+.year {
+  width: 100%;
+  position: relative;
+}
 
 .select-style select {
   width: 100%;
@@ -72,13 +76,15 @@ button[type="submit"]:hover {
 }
 
 input[type="number"] {
-  width: 100%;
   padding: 10px;
-  border: 1px solid #ccc;
+  border: none;
   border-radius: 5px;
   font-size: 16px;
   background-color: #f3f3f3;
-  transition: border 0.3s ease;
+  appearance: none;
+  box-shadow: none;
+  outline: none;
+  transition: background-color 0.3s ease;
 }
 
 input[type="number"]:focus {

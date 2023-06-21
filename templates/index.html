@@ -7,22 +7,34 @@
     <title>Quarterly Reports</title>
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='style.css', v='125') }}"
+      href="{{ url_for('static', filename='style.css', v='129') }}"
     />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
     />
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Include full jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <!-- Include Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <!-- Include your script -->
+    <script src="{{ url_for('static', filename='script.js', v=1) }}"></script>
   </head>
+
   <body>
     <div class="container">
       <h1><i class="fas fa-chart-bar"></i> Quarterly Bonus</h1>
 
       <form method="post" id="quarterlyForm" action="/">
         <label for="year">Year</label>
-        <input type="number" id="year" name="year" placeholder="Enter Year" />
+        <div class="year">
+          <input type="number" id="year" name="year" placeholder="Enter Year" />
+        </div>
+
         <label for="quarter">Select Quarter:</label>
         <div class="select-style">
           <select id="quarter" name="quarter">
@@ -32,10 +44,54 @@
             <option value="4">Fourth Quarter</option>
           </select>
         </div>
+
+        <label for="action">Select Action:</label>
+        <div class="select-style">
+          <select id="action" name="action">
+            <option value="download">Download CSV</option>
+            <option value="plot">Display Plot</option>
+          </select>
+        </div>
         <button type="submit" class="submit-button">
           <i class="fas fa-paper-plane"></i> Submit
         </button>
       </form>
+    </div>
+
+    <div
+      class="modal fade"
+      id="downloadModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="downloadModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="downloadModalLabel">Download Ready</h5>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">Your file is ready for download.</div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+            >
+              Close
+            </button>
+            <a href="#" id="downloadLink" class="btn btn-primary">Download</a>
+          </div>
+        </div>
+      </div>
     </div>
   </body>
 </html>
