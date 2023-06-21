@@ -80,15 +80,14 @@ def bonus_plot(quarter, year):
     
     return render_template('plot.html', plot=plot_html)
 
-@app.route("/bonus_chart/<quarter>/<year>", methods=["GET"])
-def bonus_chart(quarter, year):
+@app.route("/bonus_chart/<quarter>/<year>/<driver_id>", methods=["GET"])
+def bonus_chart(quarter, year, driver_id):
     df = process_quarter(quarter, year)
-
     # Sort the dataframe by 'Total Bonus'
     df = df.sort_values('Total Bonus')
     # print(df.to_json(orient='records'))
     # Send DataFrame as JSON to the client
-    return render_template('chart.html', data=df.to_json(orient='records'))
+    return render_template('chart.html', data=df.to_json(orient='records'), driverId=driver_id)
 
 
 

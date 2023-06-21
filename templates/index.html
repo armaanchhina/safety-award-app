@@ -22,7 +22,7 @@
     <!-- Include Bootstrap JS -->
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
     <!-- Include your script -->
-    <script src="{{ url_for('static', filename='script.js', v=1) }}"></script>
+    <script src="{{ url_for('static', filename='script.js', v=4) }}"></script>
   </head>
 
   <body>
@@ -44,7 +44,17 @@
             <option value="4">Fourth Quarter</option>
           </select>
         </div>
-
+        <div class="searchById">
+          <label for="ID">ID</label>
+          <div>
+            <input
+              type="number"
+              id="id"
+              name="id"
+              placeholder="Enter ID number (Optional)"
+            />
+          </div>
+        </div>
         <label for="action">Select Action:</label>
         <div class="select-style">
           <select id="action" name="action">

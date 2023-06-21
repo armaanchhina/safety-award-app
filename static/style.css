@@ -40,6 +40,11 @@ label {
   position: relative;
 }
 
+.id {
+  width: 100%;
+  position: relative;
+}
+
 .select-style select {
   width: 100%;
   padding: 10px;
