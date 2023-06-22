@@ -8,6 +8,8 @@ import datetime
 import calendar, time
 from urllib.parse import unquote
 from dotenv import load_dotenv
+import concurrent.futures
+
 print(load_dotenv())
 SAMSARA_API_TOKEN = os.getenv('SAMSARA_API_TOKEN')
 
@@ -83,6 +85,7 @@ def calculate_harsh_deduction(events) -> int:
 
 def write_to_csv(data: list) -> pd.DataFrame:
     df = pd.DataFrame(data, columns=['Driver ID', 'Driver Name', 'Idle Deduct', 'Idle Percent', 'MPG Deduct', 'Efficiency', "Harsh Deduct", "Harsh Events","Safety Deduct","Safety Score", "Total Bonus"])
+    df = df.sort_values(by="Total Bonus", ascending=False)
     df.to_csv(OUTPUT_FILE, index=False)
     return df
 
@@ -91,26 +94,50 @@ def write_to_csv(data: list) -> pd.DataFrame:
 def parse_df(df: pd.DataFrame, quarter: int):
     data = []
     start, end = get_in_unix_epoch(quarter)
-    for index, row in df.iterrows():
-        mpg_deduct = calculate_mpg_deduction(row["efficiencyMpge"])
-        idle_perct, idle_deduct = calculate_idle_deduction(row["engineRunTimeDurationMs"], row["engineIdleTimeDurationMs"])
-        id = row["driver"]["id"]
-        name = row["driver"]["name"]
 
-        safety_score_driver, harsh_event = get_safety_score_and_event_count(id, start, end)
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future_to_row = {executor.submit(get_safety_score_and_event_count, row, start, end): row for _, row in df.iterrows()}
+        for future in concurrent.futures.as_completed(future_to_row):
+            row, (safety_score_driver, harsh_event, error) = future.result()
+            if error:
+                row, (safety_score_driver, harsh_event, error) = get_safety_score_and_event_count(row, start, end)
+                if(error):
+                    print(f"Error processing row {row['driver']['name']}: {error}")
+                    continue
+            mpg_deduct = calculate_mpg_deduction(row["efficiencyMpge"])
+            idle_perct, idle_deduct = calculate_idle_deduction(row["engineRunTimeDurationMs"], row["engineIdleTimeDurationMs"])
+            id = row["driver"]["id"]
+            name = row["driver"]["name"]
+            harsh_cost = calculate_harsh_deduction(harsh_event)
 
-        harsh_cost = calculate_harsh_deduction(harsh_event)
+            safety_deduct = calculate_safety_deduction(safety_score_driver)
+            final_bonus = INITAL_BONUS - (mpg_deduct + idle_deduct + harsh_cost + safety_deduct)
 
-        safety_deduct = calculate_safety_deduction(safety_score_driver)
-        final_bonus = INITAL_BONUS - (mpg_deduct + idle_deduct + harsh_cost + safety_deduct)
+            data.append([id, name, idle_deduct, idle_perct, mpg_deduct,row["efficiencyMpge"], harsh_cost, harsh_event,safety_deduct, safety_score_driver, final_bonus])
+        return data
 
-        data.append([id, name, idle_deduct, idle_perct, mpg_deduct,row["efficiencyMpge"], harsh_cost, harsh_event,safety_deduct, safety_score_driver, final_bonus])
-    return data
+# def parse_df(df: pd.DataFrame, quarter: int):
+#     data = []
+#     start, end = get_in_unix_epoch(quarter)
+#     for index, row in df.iterrows():
+#         mpg_deduct = calculate_mpg_deduction(row["efficiencyMpge"])
+#         idle_perct, idle_deduct = calculate_idle_deduction(row["engineRunTimeDurationMs"], row["engineIdleTimeDurationMs"])
+#         id = row["driver"]["id"]
+#         name = row["driver"]["name"]
+
+#         safety_score_driver, harsh_event = get_safety_score_and_event_count(id, start, end)
+
+#         harsh_cost = calculate_harsh_deduction(harsh_event)
+
+#         safety_deduct = calculate_safety_deduction(safety_score_driver)
+#         final_bonus = INITAL_BONUS - (mpg_deduct + idle_deduct + harsh_cost + safety_deduct)
+
+#         data.append([id, name, idle_deduct, idle_perct, mpg_deduct,row["efficiencyMpge"], harsh_cost, harsh_event,safety_deduct, safety_score_driver, final_bonus])
+#     return data
 
 
 
 def fuel_and_energy_call(quarter: int):
-    now = (time.time())
     url = f"https://api.samsara.com/fleet/reports/drivers/fuel-energy?startDate={QUARTERLY[quarter][0]}&endDate={QUARTERLY[quarter][1]}&driverIds="
 
     headers = {
@@ -127,24 +154,41 @@ def fuel_and_energy_call(quarter: int):
         df = pd.DataFrame(driver_reports)
     except Exception as e:
         return (f"An error occurred: {e}")
-    print(time.time() - now)
     return df
 
 
 # This function will get safety score and event count for a driver in a certain period
-def get_safety_score_and_event_count(driver_id: str, start_time: int, end_time: int):
+def get_safety_score_and_event_count(row, start_time: int, end_time: int):
+    driver_id = row["driver"]["id"]
+    max_retries = 5  # You can adjust this number as needed
+    retries = 0
 
-    try:
-        url = f"https://api.samsara.com/v1/fleet/drivers/{driver_id}/safety/score?startMs={start_time}&endMs={end_time}"
-        headers = {
-            "accept": "application/json",
-            "authorization": f"Bearer {SAMSARA_API_TOKEN}"
-        }
-        response = requests.get(url, headers=headers)
-        json_data = response.json()
-    except Exception as e:
-        return (f"An error occurred: {e}")
-    return json_data["safetyScore"], json_data["totalHarshEventCount"]
+    while retries < max_retries:
+        try:
+            url = f"https://api.samsara.com/v1/fleet/drivers/{driver_id}/safety/score?startMs={start_time}&endMs={end_time}"
+            headers = {
+                "accept": "application/json",
+                "authorization": f"Bearer {SAMSARA_API_TOKEN}"
+            }
+            response = requests.get(url, headers=headers)
+
+            if response.status_code == 429:
+                retry_after = response.headers.get('Retry-After')  # Retrieve the value of Retry-After header
+                time.sleep(0.5)  # Delay the execution of the next request
+                retries += 1
+                continue  # Go to next iteration of loop, re-running the request
+
+            # If response is successful, parse json and return
+            json_data = response.json()
+            return row, (json_data["safetyScore"], json_data["totalHarshEventCount"], None)
+
+        except Exception as e:
+            return row, (None, None, f"An error occurred: {e}")
+    
+    # If the loop completes without a successful request, return an error
+    return row, (None, None, f"An error occurred: Maximum retries reached")
+
+
 
 
 def get_in_unix_epoch(quarter: int):
