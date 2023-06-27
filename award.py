@@ -45,10 +45,13 @@ SAFETY_SCORE_RANGE = [98, (96,97), 95]
 IDLE_RANGES = [7.0, (7.1, 24), 24.1]
 
 HARSH_RANGE = [0,1,2]
-MPG = [7.0, (6.0,6.9), 6.0]
+MPG = [7.0, (6.0,6.9), 5.9]
 
 
 def calculate_idle_deduction(run_time, idle_time):
+    '''
+    IDLE_RANGES = [7.0, (7.1, 24), 24.1]
+    '''
     idle_perct = float((idle_time/run_time) * 100)
     if idle_perct >= IDLE_RANGES[2]:
         deduct = DEDUCTION[HIGH_DEDUCTION]
@@ -59,6 +62,9 @@ def calculate_idle_deduction(run_time, idle_time):
     return idle_perct, deduct
     
 def calculate_safety_deduction(safety_score):
+    '''
+    SAFETY_SCORE_RANGE = [98, (96,97), 95]
+    '''
     if safety_score <= SAFETY_SCORE_RANGE[2]:
         return DEDUCTION[HIGH_DEDUCTION]
     elif isinstance(SAFETY_SCORE_RANGE[1], tuple) and SAFETY_SCORE_RANGE[1][0] <= safety_score <= SAFETY_SCORE_RANGE[1][1]:
@@ -67,6 +73,9 @@ def calculate_safety_deduction(safety_score):
         return DEDUCTION[ZERO_DEDUCTION]
     
 def calculate_mpg_deduction(mpg):
+    '''
+    MPG = [7.0, (6.0,6.9), 5.9]
+    '''
     if mpg <= MPG[2]:
         return DEDUCTION[HIGH_DEDUCTION]
     elif isinstance(MPG[1], tuple) and MPG[1][0] <= mpg <= MPG[1][1]:
@@ -240,5 +249,5 @@ def main(quarter: int, year: int):
     # except Exception as e:
     #     print (f"An error occurred main: {e}")
 
-if __name__ == "__main__":
-    main(3,2021)
+# if __name__ == "__main__":
+#     main(3,2021)

@@ -1,4 +1,4 @@
-body {
+/* body {
   font-family: Arial, sans-serif;
   background-color: #f3f3f3;
   margin: 0;
@@ -94,4 +94,17 @@ input[type="number"] {
 
 input[type="number"]:focus {
   border: 1px solid #4caf50;
+} */
+
+.container {
+  max-width: 600px;
+  margin-top: 3rem;
+}
+
+h1 {
+  margin-bottom: 2rem;
+}
+
+.submit-button {
+  margin-top: 1rem;
 }

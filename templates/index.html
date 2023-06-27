@@ -7,7 +7,7 @@
     <title>Quarterly Reports</title>
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='style.css', v='129') }}"
+      href="{{ url_for('static', filename='style.css', v='126') }}"
     />
     <link
       rel="stylesheet"
@@ -22,47 +22,55 @@
     <!-- Include Bootstrap JS -->
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
     <!-- Include your script -->
-    <script src="{{ url_for('static', filename='script.js', v=4) }}"></script>
+    <script src="{{ url_for('static', filename='script.js', v=10) }}"></script>
   </head>
 
   <body>
     <div class="container">
-      <h1><i class="fas fa-chart-bar"></i> Quarterly Bonus</h1>
+      <h1 class="text-center">
+        <i class="fas fa-chart-bar"></i> Quarterly Bonus
+      </h1>
 
       <form method="post" id="quarterlyForm" action="/">
-        <label for="year">Year</label>
-        <div class="year">
-          <input type="number" id="year" name="year" placeholder="Enter Year" />
+        <div class="form-group">
+          <label for="year">Year</label>
+          <select id="year" name="year" class="form-control">
+            <option value="2021">2021</option>
+            <option value="2022">2022</option>
+            <option value="2023">2023</option>
+          </select>
         </div>
 
-        <label for="quarter">Select Quarter:</label>
-        <div class="select-style">
-          <select id="quarter" name="quarter">
+        <div class="form-group">
+          <label for="quarter">Select Quarter:</label>
+          <select id="quarter" name="quarter" class="form-control">
             <option value="1">First Quarter</option>
             <option value="2">Second Quarter</option>
             <option value="3">Third Quarter</option>
             <option value="4">Fourth Quarter</option>
           </select>
         </div>
-        <div class="searchById">
+
+        <div class="form-group">
           <label for="ID">ID</label>
-          <div>
-            <input
-              type="number"
-              id="id"
-              name="id"
-              placeholder="Enter ID number (Optional)"
-            />
-          </div>
+          <input
+            type="number"
+            id="id"
+            name="id"
+            placeholder="Enter ID number (Optional)"
+            class="form-control"
+          />
         </div>
-        <label for="action">Select Action:</label>
-        <div class="select-style">
-          <select id="action" name="action">
+
+        <div class="form-group">
+          <label for="action">Select Action:</label>
+          <select id="action" name="action" class="form-control">
             <option value="download">Download CSV</option>
             <option value="plot">Display Plot</option>
           </select>
         </div>
-        <button type="submit" class="submit-button">
+
+        <button type="submit" class="btn btn-primary submit-button">
           <i class="fas fa-paper-plane"></i> Submit
         </button>
       </form>

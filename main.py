@@ -87,7 +87,7 @@ def bonus_chart(quarter, year, driver_id):
     df = df.sort_values('Total Bonus')
     # print(df.to_json(orient='records'))
     # Send DataFrame as JSON to the client
-    return render_template('chart.html', data=df.to_json(orient='records'), driverId=driver_id)
+    return render_template('chart.html', data=df.to_json(orient='records'), driverId=driver_id, year=year, quarter=quarter)
 
 
 

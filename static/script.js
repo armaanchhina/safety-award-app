@@ -7,10 +7,7 @@ $(document).ready(function () {
     const driverId = $("#id").val() || 'none';  // If driverId is empty, default to 'none'
     const action = $("#action").val();
 
-    if (isNaN(year) || year.length !== 4) {
-      alert("Invalid year format. Please enter a valid 4-digit year.");
-      return;
-    }
+  
     let redirectUrl = `/bonus_chart/${quarter}/${year}/${driverId}`;
 
     if (action === "plot") {
@@ -35,7 +32,7 @@ $(document).ready(function () {
         $("#loading").hide();
       },
       success: function (data) {
-        console.log(data); // Log data to console
+        // console.log(data); // Log data to console
 
         if (data.error) {
           alert(data.error); // Show the error message if an error exists

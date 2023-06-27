@@ -4,34 +4,141 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bonus Chart</title>
+    <!-- Adding Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+      integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+      crossorigin="anonymous"
+    />
+    <!-- <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css"
+    /> -->
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body {
+        background-color: #f5f5f5;
+      }
+      .container {
+        margin-top: 3rem;
+      }
+      #removeDriverChart {
+        color: #fff;
+        background: linear-gradient(to right, #c82333, #dc3545);
+        border: none;
+        display: none;
+        font-size: 16px;
+        padding: 10px;
+        width: 50%;
+        margin: 20px auto;
+        cursor: pointer;
+        text-align: center;
+        border-radius: 5px;
+        transition: all 0.3s ease-in-out;
+        box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
+      }
+      #removeDriverChart:hover {
+        background: linear-gradient(to right, #dc3545, #c82333);
+      }
+
+      #searchBarContainer {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 2rem;
+      }
+      #searchBar {
+        padding: 10px 20px 10px 40px;
+        font-size: 1.2rem;
+        width: 50%;
+        border-radius: 25px;
+        border: 1px solid #dc3545;
+        transition: all 0.3s ease-in-out;
+      }
+      #searchBar:focus {
+        box-shadow: 0 0 5px rgba(220, 53, 69, 0.5);
+        border: 1px solid rgba(220, 53, 69, 0.7);
+      }
+      #searchIcon {
+        position: absolute;
+        padding-right: 0;
+      }
+    </style>
   </head>
   <body>
-    <div id="chartContainer"></div>
-    <canvas id="bonusChart"></canvas>
+    <div class="container">
+      <div id="searchBarContainer" class="col-md-12">
+        <input type="text" id="searchBar" placeholder="Search Driver ID" />
+        <span id="searchIcon" class="fa fa-search"></span>
+
+        <button id="searchButton" class="btn btn-primary mt-3 ml-3">
+          Search
+        </button>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12">
+          <h3 class="text-center">
+            Bonuses for {{year | safe}}, Quarter {{quarter|safe}}
+          </h3>
+          <div id="chartContainer">
+            <canvas id="bonusChart"></canvas>
+          </div>
+          <button
+            id="removeDriverChart"
+            class="btn btn-danger mt-3"
+            style="display: none"
+          >
+            Remove Driver Chart
+          </button>
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-md-12">
+          <div id="totalBonuses" class="text-center"></div>
+        </div>
+      </div>
+    </div>
     <script>
       var ctx = document.getElementById("bonusChart").getContext("2d");
       var data = {{ data | safe }};
+      console.log(data)
       var specificDriverId = "{{driverId | safe}}";
-      if(specificDriverId){
-        var specificDriver = data.find(function(driver){
+      var selectedBarIndex = null; // Variable to store the selected bar index
+
+      if (specificDriverId && specificDriverId !== "none") {
+        var specificDriver = data.find(function (driver) {
           return driver["Driver ID"] === specificDriverId;
         });
         if (specificDriver) {
-          var newCanvas = document.createElement('canvas');
+          var newCanvas = document.createElement("canvas");
           newCanvas.id = "selectedDriverChart";
           var chartContainer = document.getElementById("chartContainer");
           chartContainer.insertBefore(newCanvas, chartContainer.firstChild);
           plotDriverData(specificDriver);
         }
+      } else {
+        console.log("else worked");
+        var totalBonuses = data.reduce(function (total, driver) {
+          // console.log("Current total:", total);
+          return total + driver["Total Bonus"];
+        }, 0);
       }
 
+      var averageBonus = totalBonuses / data.length; // Calculate average bonus
+      document.getElementById("totalBonuses").innerHTML = "Total Sum of Bonuses Awarded: $" + totalBonuses.toFixed(2) + "<br>"
+                                                           + "Average Bonus: $" + averageBonus.toFixed(2);
+
       var labels = data.map(function (e) {
-        return e["Driver ID"];
+        return e["Driver Name"];
       });
       var dataset = data.map(function (e) {
         return e["Total Bonus"];
       });
+      var removeDriverChartButton = document.getElementById("removeDriverChart");
 
       var chart = new Chart(ctx, {
         type: "bar",
@@ -41,10 +148,9 @@
             {
               label: "Total Bonus Per Driver",
               data: dataset,
-              backgroundColor:  function(context){
+              backgroundColor: function (context) {
                 var index = context.dataIndex;
-                var value = context.dataset.data[index];
-                return labels[index] === specificDriverId ? 'rgba(255,0,0,0.5)' : 'rgb(70, 130, 180)'
+                return index === selectedBarIndex ? "rgb(255, 0, 0)" : "rgb(70, 130, 180)";
               },
               borderColor: "rgba(0,123,255,1)",
               borderWidth: 1,
@@ -57,6 +163,13 @@
             y: {
               beginAtZero: true,
             },
+            x: {
+              ticks: {
+                autoSkip: false,
+                minRotation: 90,
+                maxRotation: 90
+              }
+            }
           },
           plugins: {
             tooltip: {
@@ -64,34 +177,82 @@
                 label: function (context) {
                   var driverIndex = context.dataIndex;
                   var driver = data[driverIndex];
-                  return driver["Driver Name"] + ": " + driver["Total Bonus"];
+                  return driver["Driver ID"] + ": " + driver["Total Bonus"];
                 },
               },
             },
           },
           onClick: function (event, elements) {
             if (elements.length > 0) {
-              console.log("click worked");
               var chartContainer = document.getElementById("chartContainer");
               var newCanvas = chartContainer.querySelector("#selectedDriverChart");
               if (!newCanvas) {
-                newCanvas = document.createElement('canvas');
+                newCanvas = document.createElement("canvas");
                 newCanvas.id = "selectedDriverChart";
                 chartContainer.appendChild(newCanvas);
               }
               var driverIndex = elements[0].index;
               var driver = data[driverIndex];
               plotDriverData(driver);
+
+              selectedBarIndex = driverIndex; // Update the selected bar index
+              chart.update(); // Update the chart to reflect the new colors
+              removeDriverChartButton.style.display = "block"; //initally hidden so will be seen now
             }
           },
         },
       });
 
+
+      removeDriverChartButton.addEventListener("click", function(){
+        var chartContainer = document.getElementById("chartContainer");
+        var selectedDriverChartCanvas = chartContainer.querySelector("#selectedDriverChart");
+        if(selectedDriverChartCanvas){
+          chartContainer.removeChild(selectedDriverChartCanvas);
+          selectedDriverChart = null;
+          removeDriverChartButton.style.display = "none"; // default display which is block
+          selectedBarIndex = null;
+          chart.update();
+        }
+      })
+
       var selectedDriverChart = null;
+
+
+      document.getElementById('searchButton').addEventListener('click', function() {
+          var searchBarValue = document.getElementById('searchBar').value;
+          if (searchBarValue) {
+            // Find the index of the driver with the searched ID
+            var searchedDriverIndex = data.findIndex(function(driver) {
+              return driver['Driver ID'] === searchBarValue;
+            });
+            if (searchedDriverIndex !== -1) {
+              // If a matching driver is found, highlight the corresponding bar
+              selectedBarIndex = searchedDriverIndex;
+              chart.update(); // Update the chart to reflect the new colors
+            } else {
+              alert('No driver found with the entered ID');
+            }
+          } else {
+            alert('Please enter a Driver ID');
+          }
+        });
+
+        document.getElementById('searchBar').addEventListener('keyup', function(e) {
+          if (e.key === 'Enter' || e.keyCode === 13) {
+            document.getElementById('searchButton').click();
+          }
+        });
+
 
       function plotDriverData(driver) {
         var selectedDriverCtx = document.getElementById("selectedDriverChart").getContext("2d");
-        var selectedDriverData = [driver["Idle Deduct"], driver["MPG Deduct"], driver["Harsh Deduct"], driver["Safety Deduct"]];
+        var selectedDriverData = [
+          driver["Idle Deduct"],
+          driver["MPG Deduct"],
+          driver["Harsh Deduct"],
+          driver["Safety Deduct"],
+        ];
         var selectedDriverLabels = ["Idle Deduct", "MPG Deduct", "Harsh Deduct", "Safety Deduct"];
 
         if (selectedDriverChart) {
