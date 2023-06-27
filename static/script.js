@@ -15,6 +15,11 @@ $(document).ready(function () {
       window.location.href = redirectUrl;
       return;
     }
+    if (action === "scorecard") {
+      // Redirect to the plot URL
+      window.location.href = `/scorecard/${quarter}/${year}/${driverId}`;
+      return;
+    }
 
     // If the action is not "plot", proceed with the download action
     performAjaxRequest(year, quarter);

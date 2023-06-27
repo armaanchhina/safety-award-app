@@ -89,6 +89,11 @@ def bonus_chart(quarter, year, driver_id):
     # Send DataFrame as JSON to the client
     return render_template('chart.html', data=df.to_json(orient='records'), driverId=driver_id, year=year, quarter=quarter)
 
+@app.route("/scorecard/<quarter>/<year>/<driver_id>", methods=["GET"])
+def score_card(quarter, year, driver_id):
+    df = process_quarter(quarter, year)
+    df = df.sort_values('Total Bonus')
+    return render_template('scorecard.html', data=df.to_json(orient='records'), driverId=driver_id, year=year, quarter=quarter)
 
 
 
@@ -111,3 +116,7 @@ def download_csv(df: pd.DataFrame, fname:str):
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=8080, debug=True)
+
+
+
+#4400324

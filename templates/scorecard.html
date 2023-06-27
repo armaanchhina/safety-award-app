@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Driver Scorecard</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+      body {
+        background-color: #f4f4f4;
+      }
+      .card {
+        margin: 20px auto;
+        width: 80%;
+        border: none;
+        box-shadow: 0 0 15px 0 rgba(0, 0, 0, 0.2);
+      }
+      .card-header {
+        font-size: 1.5em;
+        background-color: #007bff;
+        color: white;
+        border-bottom: 1px solid #007bff;
+      }
+      .list-group-item {
+        border: none;
+        border-bottom: 1px solid #ddd;
+        font-size: 1.2em;
+        padding: 15px 20px;
+      }
+      .list-group-item span {
+        font-weight: 700;
+      }
+      .list-group-item:last-child {
+        border-bottom: none;
+      }
+      .indented {
+        padding-left: 50px;
+        font-size: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="card-header text-center">
+        Scorecard for Driver: <span id="driver-id"></span>
+      </div>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">
+          Total Bonus: <span id="total-bonus"></span>
+        </li>
+        <li class="list-group-item">
+          Idle Deduct: <span id="idle-deduct"></span>
+          <div class="indented">
+            Idle Percentage: <span id="idle-perct"></span>
+          </div>
+        </li>
+        <li class="list-group-item">
+          MPG Deduct: <span id="mpg-deduct"></span>
+          <div class="indented">MPG: <span id="mpg"></span></div>
+        </li>
+        <li class="list-group-item">
+          Harsh Deduct: <span id="harsh-deduct"></span>
+          <div class="indented">
+            Harsh Events: <span id="harsh-events"></span>
+          </div>
+        </li>
+        <li class="list-group-item">
+          Safety Deduct: <span id="safety-deduct"></span>
+          <div class="indented">
+            Safety Score: <span id="safety-score"></span>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="card mt-5">
+      <div class="card-header text-center">Your Performance Breakdown</div>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">
+          <div>
+            <strong>Safety Score:</strong> <span id="user-safety-score"></span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar bg-success" style="width: 33%">98+</div>
+            <div class="progress-bar bg-warning" style="width: 33%">96-97</div>
+            <div class="progress-bar bg-danger" style="width: 34%"><=95</div>
+          </div>
+        </li>
+        <li class="list-group-item">
+          <div>
+            <strong>Idle Percentage:</strong> <span id="user-idle-perct"></span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar bg-success" style="width: 33%"><=7.0</div>
+            <div class="progress-bar bg-warning" style="width: 33%">7.1-24</div>
+            <div class="progress-bar bg-danger" style="width: 34%">24.1+</div>
+          </div>
+        </li>
+        <li class="list-group-item">
+          <div><strong>MPG:</strong> <span id="user-mpg"></span></div>
+          <div class="progress">
+            <div class="progress-bar bg-success" style="width: 33%">>=7.0</div>
+            <div class="progress-bar bg-warning" style="width: 33%">
+              6.0-6.9
+            </div>
+            <div class="progress-bar bg-danger" style="width: 34%"><=5.9</div>
+          </div>
+        </li>
+        <li class="list-group-item">
+          <div>
+            <strong>Harsh Events:</strong> <span id="user-harsh-events"></span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar bg-success" style="width: 33%">0</div>
+            <div class="progress-bar bg-warning" style="width: 33%">1</div>
+            <div class="progress-bar bg-danger" style="width: 34%">2+</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <script>
+      var driverId = "{{driverId | safe}}";
+      var data = {{ data | safe }};
+      console.log(data)
+      var driverData = data.find((driver) => driver["Driver ID"] == driverId);
+
+      if (driverData) {
+        document.getElementById("driver-id").textContent =
+          driverData["Driver ID"];
+        document.getElementById(
+          "total-bonus"
+        ).textContent = `$${driverData["Total Bonus"]}`;
+        document.getElementById(
+          "idle-deduct"
+        ).textContent = `$${driverData["Idle Deduct"]}`;
+        document.getElementById(
+          "idle-perct"
+        ).textContent = `${driverData["Idle Percent"].toFixed(2)}%`;
+        document.getElementById(
+          "mpg-deduct"
+        ).textContent = `$${driverData["MPG Deduct"].toFixed(2)}`;
+        document.getElementById(
+          "mpg"
+        ).textContent = `${driverData["Efficiency"]}`;
+        document.getElementById(
+          "harsh-deduct"
+        ).textContent = `$${driverData["Harsh Deduct"]}`;
+        document.getElementById(
+          "harsh-events"
+        ).textContent = `${driverData["Harsh Events"]}`;
+        document.getElementById(
+          "safety-deduct"
+        ).textContent = `$${driverData["Safety Deduct"]}`;
+        document.getElementById(
+          "safety-score"
+        ).textContent = `${driverData["Safety Score"]}`;
+      } else {
+        alert("No data found for driver with ID " + driverId);
+      }
+
+      document.getElementById("user-safety-score").textContent = `${driverData["Safety Score"]}`;
+      document.getElementById("user-idle-perct").textContent = `${driverData["Idle Percent"].toFixed(2)}%`;
+      document.getElementById("user-mpg").textContent = `${driverData["Efficiency"].toFixed(2)}`;
+      document.getElementById("user-harsh-events").textContent = `${driverData["Harsh Events"]}`;
+    </script>
+  </body>
+</html>

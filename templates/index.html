@@ -22,7 +22,7 @@
     <!-- Include Bootstrap JS -->
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
     <!-- Include your script -->
-    <script src="{{ url_for('static', filename='script.js', v=10) }}"></script>
+    <script src="{{ url_for('static', filename='script.js', v=12) }}"></script>
   </head>
 
   <body>
@@ -67,6 +67,7 @@
           <select id="action" name="action" class="form-control">
             <option value="download">Download CSV</option>
             <option value="plot">Display Plot</option>
+            <option value="scorecard">Display Scorecard</option>
           </select>
         </div>
 
