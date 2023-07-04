@@ -98,12 +98,38 @@ def write_to_csv(data: list) -> pd.DataFrame:
     df.to_csv(OUTPUT_FILE, index=False)
     return df
 
+def find_driver(df: pd.DataFrame, driver_id: str, start, end):
+    data = []
+    try:
+        df = df[df['driver'].apply(lambda x: x['id'] if isinstance(x, dict) and 'id' in x else None) == driver_id]
+    except Exception as e:
+        return (f"An error occurred: {e}")
 
+    row, (safety_score_driver, harsh_event, error) = get_safety_score_and_event_count(df.iloc[0],start,end)
+    if error:
+        row, (safety_score_driver, harsh_event, error) = get_safety_score_and_event_count(row, start, end)
+        if(error):
+            print(f"Error processing row {row['driver']['name']}: {error}")
+            return
+    mpg_deduct = calculate_mpg_deduction(row["efficiencyMpge"])
+    idle_perct, idle_deduct = calculate_idle_deduction(row["engineRunTimeDurationMs"], row["engineIdleTimeDurationMs"])
+    id = row["driver"]["id"]
+    name = row["driver"]["name"]
+    harsh_cost = calculate_harsh_deduction(harsh_event)
 
-def parse_df(df: pd.DataFrame, quarter: int):
+    safety_deduct = calculate_safety_deduction(safety_score_driver)
+    final_bonus = INITAL_BONUS - (mpg_deduct + idle_deduct + harsh_cost + safety_deduct)
+
+    data.append([id, name, idle_deduct, idle_perct, mpg_deduct,row["efficiencyMpge"], harsh_cost, harsh_event,safety_deduct, safety_score_driver, final_bonus])
+    print(data)
+    return data
+
+def parse_df(df: pd.DataFrame, quarter: int, driver_id = None):
     data = []
     start, end = get_in_unix_epoch(quarter)
-
+    # print(df['driver'].head())
+    if(driver_id != None and driver_id != 'none'):
+        return find_driver(df, driver_id, start, end)
     with concurrent.futures.ThreadPoolExecutor() as executor:
         future_to_row = {executor.submit(get_safety_score_and_event_count, row, start, end): row for _, row in df.iterrows()}
         for future in concurrent.futures.as_completed(future_to_row):
@@ -125,24 +151,7 @@ def parse_df(df: pd.DataFrame, quarter: int):
             data.append([id, name, idle_deduct, idle_perct, mpg_deduct,row["efficiencyMpge"], harsh_cost, harsh_event,safety_deduct, safety_score_driver, final_bonus])
         return data
 
-# def parse_df(df: pd.DataFrame, quarter: int):
-#     data = []
-#     start, end = get_in_unix_epoch(quarter)
-#     for index, row in df.iterrows():
-#         mpg_deduct = calculate_mpg_deduction(row["efficiencyMpge"])
-#         idle_perct, idle_deduct = calculate_idle_deduction(row["engineRunTimeDurationMs"], row["engineIdleTimeDurationMs"])
-#         id = row["driver"]["id"]
-#         name = row["driver"]["name"]
 
-#         safety_score_driver, harsh_event = get_safety_score_and_event_count(id, start, end)
-
-#         harsh_cost = calculate_harsh_deduction(harsh_event)
-
-#         safety_deduct = calculate_safety_deduction(safety_score_driver)
-#         final_bonus = INITAL_BONUS - (mpg_deduct + idle_deduct + harsh_cost + safety_deduct)
-
-#         data.append([id, name, idle_deduct, idle_perct, mpg_deduct,row["efficiencyMpge"], harsh_cost, harsh_event,safety_deduct, safety_score_driver, final_bonus])
-#     return data
 
 
 
@@ -236,18 +245,18 @@ def update_year(year):
 
 
 
-def main(quarter: int, year: int):
+def main(quarter: int, year: int, driver_id = None):
     if(year>2020):
         update_year(year)
     else:
         return pd.DataFrame
     # try:
     df_fuel = fuel_and_energy_call(int(quarter))
-    data = parse_df(df_fuel, quarter)
+    data = parse_df(df_fuel, quarter, driver_id)
     final_df = write_to_csv(data)
-    return (final_df)
+    return final_df
     # except Exception as e:
     #     print (f"An error occurred main: {e}")
 
 # if __name__ == "__main__":
-#     main(3,2021)
+#     main(1,2021)

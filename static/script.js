@@ -16,8 +16,14 @@ $(document).ready(function () {
       return;
     }
     if (action === "scorecard") {
-      // Redirect to the plot URL
+      // Redirect to the scorecard URL
       window.location.href = `/scorecard/${quarter}/${year}/${driverId}`;
+      return;
+    }
+
+    if (action === "piegraph") {
+      // Redirect to the pie URL
+      window.location.href = `/pie/${quarter}/${year}`;
       return;
     }
 

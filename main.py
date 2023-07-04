@@ -81,8 +81,8 @@ def bonus_plot(quarter, year):
     return render_template('plot.html', plot=plot_html)
 
 @app.route("/bonus_chart/<quarter>/<year>/<driver_id>", methods=["GET"])
-def bonus_chart(quarter, year, driver_id):
-    df = process_quarter(quarter, year)
+def bonus_chart(quarter, year, driver_id = None):
+    df = process_quarter(quarter, year, str(driver_id))
     # Sort the dataframe by 'Total Bonus'
     df = df.sort_values('Total Bonus')
     # print(df.to_json(orient='records'))
@@ -91,16 +91,24 @@ def bonus_chart(quarter, year, driver_id):
 
 @app.route("/scorecard/<quarter>/<year>/<driver_id>", methods=["GET"])
 def score_card(quarter, year, driver_id):
-    df = process_quarter(quarter, year)
+    df = process_quarter(quarter, year, str(driver_id))
     df = df.sort_values('Total Bonus')
     return render_template('scorecard.html', data=df.to_json(orient='records'), driverId=driver_id, year=year, quarter=quarter)
 
+@app.route("/pie/<quarter>/<year>", methods=["GET"])
+def pie(quarter, year):
+    print("hello")
+    df = process_quarter(quarter, year)
+    df = df.sort_values('Total Bonus')
+    return render_template('pie.html', data=df.to_json(orient='records'), year=year, quarter=quarter)
 
 
 
-def process_quarter(quarter: int, year: int):
+
+def process_quarter(quarter: int, year: int, driver_id = None):
     """Process the file and delete it afterwards."""
-    return main(int(quarter), int(year))
+    print(driver_id)
+    return main(int(quarter), int(year), driver_id)
 
 # def download_csv(df: pd.DataFrame, fname:str):
 #     temp = tempfile.NamedTemporaryFile(suffix=".csv")
